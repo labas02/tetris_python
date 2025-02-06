@@ -4,6 +4,8 @@ from collections import defaultdict
 import threading
 import timeit
 
+
+coords = [[]]
 pygame.init()
 screen = pygame.display.set_mode((800, 1000))
 clock = pygame.time.Clock()
@@ -14,30 +16,42 @@ select_option = 2
 w, h = 10, 20
 
 play_field = defaultdict(lambda: defaultdict(lambda: 0))
-
-play_field[1][2] = 1
-
-cur_block_pos = [[]]
+coord_size = 3
 
 pygame.font.init()
 helvetica = pygame.font.SysFont('helvetica', 30)
 
 def spawn_block():
+    global coords  # Modify the global coords
+    coords = [[4, 0], [5, 0], [6, 0]]  # Initialize the coords list with the block positions
     play_field[4][0] = 1
     play_field[5][0] = 1
     play_field[6][0] = 1
-    
+    print(coords[0][0])
+  
 
 def move_block():
-    play_field[4][0] = 0
-    play_field[5][0] = 0
-    play_field[6][0] = 0
+    global coords
+    if coords:  # Check if coords is not empty
+        for x in range(len(coords)):
+            coords[x][1] += 1
+
+            play_field[coords[x][0]][coords[x][1]-1] = 0 
+            play_field[coords[x][0]][coords[x][1]] = 1  
+    else:
+        print("No blocks to move, coords is empty.")
 
 def start_timer():
+    if stop_timer == False:
+        print("time")
+        threading.Timer(3, continue_timer).start()
+
+def continue_timer():
     move_block()
     if stop_timer == False:
         print("time")
-        threading.Timer(3, start_timer).start()
+        threading.Timer(3, continue_timer).start()
+
 
 def rmenu():
     screen.fill("purple")
@@ -62,6 +76,7 @@ timeit.timeit('print("hello")',number =1000)
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            stop_timer = True
             running = False
         if game_stage ==1:
             if event.type == pygame.KEYUP:

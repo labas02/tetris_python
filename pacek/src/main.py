@@ -3,6 +3,7 @@ import itertools
 from collections import defaultdict
 import threading
 import timeit
+import random
 
 
 coords = [[]]
@@ -21,23 +22,65 @@ coord_size = 3
 pygame.font.init()
 helvetica = pygame.font.SysFont('helvetica', 30)
 
-def spawn_block():
+def spawn_block(which):
+    global running
     global coords 
-    coords = [[4, 0], [5, 0], [6, 0],[7,0]] 
-    play_field[4][0] = 1
-    play_field[5][0] = 1
-    play_field[6][0] = 1
-    play_field[7][0] = 1
-  
+    which = random.randint(1,7)
+    if which == 1:
+        coords = [[4, 0], [5, 0], [4, 1],[5,1]] 
+        play_field[4][0] = 1
+        play_field[5][0] = 1
+        play_field[4][1] = 1
+        play_field[5][1] = 1
+    elif which == 2:
+        coords = [[4, 0], [5, 0], [5, 1],[6,1]] 
+        play_field[4][0] = 2
+        play_field[5][0] = 2
+        play_field[5][1] = 2
+        play_field[6][1] = 2
+    elif which == 3:
+        coords = [[4, 1], [5, 1], [5, 0],[6,0]] 
+        play_field[4][1] = 3
+        play_field[5][1] = 3
+        play_field[5][0] = 3
+        play_field[6][0] = 3
+    elif which == 4:
+        coords = [[4, 0], [5, 0], [5, 1],[5,2]] 
+        play_field[4][0] = 4
+        play_field[5][0] = 4
+        play_field[5][1] = 4
+        play_field[5][2] = 4
+    elif which == 5:
+        coords = [[4, 0], [5, 0], [4, 1],[4,2]] 
+        play_field[4][0] = 5
+        play_field[5][0] = 5
+        play_field[4][1] = 5
+        play_field[4][2] = 5
+    elif which == 6:
+        coords = [[4, 0], [4, 1], [3, 1],[5,1]] 
+        play_field[4][0] = 6
+        play_field[4][1] = 6
+        play_field[3][1] = 6
+        play_field[5][1] = 6
+    elif which == 7:
+        coords = [[4, 0], [5, 0], [6, 0],[7,0]] 
+        play_field[4][0] = 7
+        play_field[5][0] = 7
+        play_field[6][0] = 7
+        play_field[7][0] = 7
+    if check_floor():
+        running = False
 
 def move_block(which_side, value):
     global coords
     if coords: 
+        original_number = play_field[coords[0][0]][coords[0][1]]
+        print(original_number)
         new_coords = []  
         for x in range(len(coords)):
             if which_side == 0: 
                 if check_floor():
-                    spawn_block()
+                    spawn_block(2)
                     return 
                 new_coords.append([coords[x][0], coords[x][1] + 1])
             elif which_side == 1:
@@ -51,23 +94,26 @@ def move_block(which_side, value):
         
         coords = new_coords
         for x, y in coords:
-            play_field[x][y] = 1  
+            play_field[x][y] = original_number  
 
+
+def rotate_block():
+    return
 
 def check_floor():
     global coords
     global stop_timer
     freeze = False
-    for x,y in coords:
-        if play_field[x][y+1]!=0 or y>=19:
-            if y == 0:
-                stop_timer = True
-
-                pygame.quit()
-            freeze = True
-    if freeze:
+    if coords:
         for x,y in coords:
-            play_field[x][y]+=10
+            if play_field[x][y+1]>10  or y>=19:
+                if y == 0:
+                    stop_timer = True
+                    pygame.quit()
+                freeze = True
+        if freeze:
+            for x,y in coords:
+                play_field[x][y]+=10
     return freeze
 
 def start_timer():
@@ -121,7 +167,7 @@ while running:
                     if select_option ==1:
                         game_stage = 2
                         start_timer()
-                        spawn_block()
+                        spawn_block(1)
                     elif select_option == 4:
                         running = False
         elif game_stage == 2:
@@ -144,8 +190,21 @@ while running:
             for j in range(20):
                 if play_field[i][j] == 1:
                      pygame.draw.rect(screen,'green',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))   
-                elif play_field[i][j] ==11:
-                    pygame.draw.rect(screen,'blue',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))   
+                elif play_field[i][j] ==2:
+                    pygame.draw.rect(screen,'red',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] ==3:
+                    pygame.draw.rect(screen,'orange',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] ==4:
+                    pygame.draw.rect(screen,'cyan',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] ==5:
+                    pygame.draw.rect(screen,'purple',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] ==6:
+                    pygame.draw.rect(screen,'violet',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] ==7:
+                    pygame.draw.rect(screen,'pink',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                elif play_field[i][j] >10:
+                    pygame.draw.rect(screen,'blue',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                 
 
                 else:
                     if j %2 != 0:
@@ -163,7 +222,6 @@ while running:
 
 
     pygame.display.flip()
-    dt = clock.tick(60) / 1000
 
 pygame.quit()
 

@@ -1,4 +1,4 @@
-import pygame
+import pygame # type: ignore
 import itertools
 from collections import defaultdict
 import threading
@@ -22,35 +22,64 @@ pygame.font.init()
 helvetica = pygame.font.SysFont('helvetica', 30)
 
 def spawn_block():
-    global coords  # Modify the global coords
-    coords = [[4, 0], [5, 0], [6, 0]]  # Initialize the coords list with the block positions
+    global coords 
+    coords = [[4, 0], [5, 0], [6, 0],[7,0]] 
     play_field[4][0] = 1
     play_field[5][0] = 1
     play_field[6][0] = 1
-    print(coords[0][0])
+    play_field[7][0] = 1
   
 
-def move_block():
+def move_block(which_side, value):
     global coords
-    if coords:  # Check if coords is not empty
+    if coords: 
+        new_coords = []  
         for x in range(len(coords)):
-            coords[x][1] += 1
+            if which_side == 0: 
+                if check_floor():
+                    spawn_block()
+                    return 
+                new_coords.append([coords[x][0], coords[x][1] + 1])
+            elif which_side == 1:
+                if coords[x][0]+value<10 and coords[x][0]+value>=0:
+                    new_coords.append([coords[x][0] + value, coords[x][1]])
+                else:
+                    return
+         
+        for x, y in coords:
+            play_field[x][y] = 0  
+        
+        coords = new_coords
+        for x, y in coords:
+            play_field[x][y] = 1  
 
-            play_field[coords[x][0]][coords[x][1]-1] = 0 
-            play_field[coords[x][0]][coords[x][1]] = 1  
-    else:
-        print("No blocks to move, coords is empty.")
+
+def check_floor():
+    global coords
+    global stop_timer
+    freeze = False
+    for x,y in coords:
+        if play_field[x][y+1]!=0 or y>=19:
+            if y == 0:
+                stop_timer = True
+
+                pygame.quit()
+            freeze = True
+    if freeze:
+        for x,y in coords:
+            play_field[x][y]+=10
+    return freeze
 
 def start_timer():
     if stop_timer == False:
         print("time")
-        threading.Timer(3, continue_timer).start()
+        threading.Timer(0.1, continue_timer).start()
 
 def continue_timer():
-    move_block()
+    move_block(0,1)
     if stop_timer == False:
         print("time")
-        threading.Timer(3, continue_timer).start()
+        threading.Timer(0.1, continue_timer).start()
 
 
 def rmenu():
@@ -95,7 +124,12 @@ while running:
                         spawn_block()
                     elif select_option == 4:
                         running = False
-        #elif game_stage == 2:
+        elif game_stage == 2:
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_d:
+                    move_block(1,1)
+                elif event.key == pygame.K_a:
+                    move_block(1,-1)
 
     if  game_stage == 1:
         rmenu()
@@ -110,6 +144,9 @@ while running:
             for j in range(20):
                 if play_field[i][j] == 1:
                      pygame.draw.rect(screen,'green',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))   
+                elif play_field[i][j] ==11:
+                    pygame.draw.rect(screen,'blue',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))   
+
                 else:
                     if j %2 != 0:
                         if i % 2 == 0:

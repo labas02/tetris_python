@@ -1,12 +1,15 @@
-import pygame
+import pygame # type: ignore
 import itertools
 from collections import defaultdict
 import threading
 import timeit
 import random
 
+speed = 0.5
 
 coords = [[]]
+current_object = 1
+block_queue = []
 pygame.init()
 screen = pygame.display.set_mode((800, 1000))
 clock = pygame.time.Clock()
@@ -24,8 +27,14 @@ helvetica = pygame.font.SysFont('helvetica', 30)
 
 def spawn_block(which):
     global running
+    global current_object
+    global block_queue
     global coords 
-    which = random.randint(1,7)
+
+    which = block_queue[0]
+    block_queue.pop(0)
+    current_object = which
+    
     if which == 1:
         coords = [[4, 0], [5, 0], [4, 1],[5,1]] 
         play_field[4][0] = 1
@@ -74,88 +83,68 @@ def spawn_block(which):
 def move_block(which_side, value):
     global coords
     if coords: 
-        original_number = play_field[coords[0][0]][coords[0][1]]
-        print(original_number)
+        original_number = play_field[coords[0][0]][coords[0][1]] 
         new_coords = []  
-        for x in range(len(coords)):
+
+        for x, y in coords:
             if which_side == 0: 
                 if check_floor():
-                    spawn_block(2)
+                    spawn_block(random.randint(1,7)) 
                     return 
-                new_coords.append([coords[x][0], coords[x][1] + 1])
-            elif which_side == 1:
-                if coords[x][0]+value<10 and coords[x][0]+value>=0:
-                    new_coords.append([coords[x][0] + value, coords[x][1]])
+                new_coords.append([x, y + 1])
+
+            elif which_side == 1:  
+                if 0 <= x + value < 10: 
+                    new_coords.append([x + value, y])
                 else:
-                    return
-         
+                    return 
+
         for x, y in coords:
             play_field[x][y] = 0  
-        
+
         coords = new_coords
         for x, y in coords:
-            play_field[x][y] = original_number
+            play_field[x][y] = original_number 
+
 
 
 def rotate_block():
     global coords, play_field
     if coords:
-        # Get the pivot point (usually the first coordinate in the block)
         pivot = coords[0]
         new_coords = []
 
-        # Rotate each coordinate 90 degrees around the pivot point
         for x, y in coords:
-            # 90-degree rotation formula:
             new_x = pivot[0] + (y - pivot[1])
             new_y = pivot[1] - (x - pivot[0])
             new_coords.append([new_x, new_y])
 
-        # Debug: print the old and new coordinates for rotation
         print("Old coords:", coords)
         print("New coords:", new_coords)
 
-        # Check if the new coordinates are valid (within bounds and not colliding with existing blocks)
         valid_move = True
 
         for x, y in new_coords:
-            # Check bounds
             if not (0 <= x < 10 and 0 <= y < 20):
                 valid_move = False
                 print(f"Out of bounds: {x}, {y}")
                 break
 
-            # Check for collision with frozen blocks (i.e., blocks with values >= 10)
             if play_field[x][y] >= 10:
                 valid_move = False
                 print(f"Collision at: {x}, {y}")
                 break
 
         if valid_move:
-            # Block is valid for rotation: clear the old block from the playfield
             for x, y in coords:
                 play_field[x][y] = 0  # Clear old block
 
-            # Update the coordinates to the new rotated ones
             coords = new_coords
 
-            # Get the block type (assuming it's stored at the first coordinate of the original block)
-            block_type = play_field[coords[0][0]][coords[0][1]] if play_field[coords[0][0]][coords[0][
-                1]] > 0 else 1  # Default to 1 if no type found
-
-            # Debug: print block type to check if it's correct
-            print(f"Block type: {block_type}")
-
-            # Place the rotated block on the playfield with the correct block type
             for x, y in coords:
-                play_field[x][y] = block_type  # Place block back
+                play_field[x][y] = current_object  # Place block back
 
-            # Debug: print the updated playfield
-            print("Updated playfield:")
-            for row in play_field:
-                print(row)
-        else:
-            print("Rotation failed: Invalid move detected.")
+            
 
 
 def check_floor():
@@ -171,19 +160,20 @@ def check_floor():
                 freeze = True
         if freeze:
             for x,y in coords:
+                block_queue.append(random.randint(1,7))
                 play_field[x][y]+=10
     return freeze
 
 def start_timer():
     if stop_timer == False:
         print("time")
-        threading.Timer(0.1, continue_timer).start()
+        threading.Timer(speed, continue_timer).start()
 
 def continue_timer():
     move_block(0,1)
     if stop_timer == False:
         print("time")
-        threading.Timer(0.1, continue_timer).start()
+        threading.Timer(speed, continue_timer).start()
 
 
 def rmenu():
@@ -204,7 +194,6 @@ def rmenu():
     pygame.draw.rect(screen,(192,191,188),(265,665,270,70))
     screen.blit(helvetica.render("exit",False,(0,0,0)),(265,665))
 
-timeit.timeit('print("hello")',number =1000)
 
 while running:
     for event in pygame.event.get():
@@ -224,6 +213,8 @@ while running:
                 elif event.key == pygame.K_RETURN:
                     if select_option ==1:
                         game_stage = 2
+                        while len(block_queue) <5:
+                            block_queue.append(random.randint(1,7))
                         start_timer()
                         spawn_block(1)
                     elif select_option == 4:
@@ -235,20 +226,47 @@ while running:
                 elif event.key == pygame.K_a:
                     move_block(1,-1)
                 elif event.key == pygame.K_SPACE:
-                    print("SPACE")
                     rotate_block()
 
     if  game_stage == 1:
         rmenu()
 
     elif game_stage == 2:
+        offset = 200
+        ite = 200
         frame_w = 10
         rect_size = 40
         screen.fill("purple")
         pygame.draw.rect(screen,"grey",(0,0,800,1000))
-        pygame.draw.rect(screen,"blue",(0,1000-(rect_size*20)-(frame_w*2),rect_size*10+(frame_w*2),rect_size*20+(frame_w*2)))       
-        for i in range(10):
-            for j in range(20):
+        pygame.draw.rect(screen,"blue",(0,1000-(rect_size*20)-(frame_w*2),rect_size*10+(frame_w*2),rect_size*20+(frame_w*2)))    
+        pygame.draw.rect(screen,"black",(420,180,200,800))
+        if block_queue:
+            for x in range(0,len(block_queue)):
+                if block_queue[x] == 1:
+                    pygame.draw.rect(screen,"green",(460,offset+ite*x,80,80))
+                elif block_queue[x] == 2:
+                    pygame.draw.rect(screen,"red",(460,offset+ite*x,80,40))
+                    pygame.draw.rect(screen,"red",(500,40+offset+ite*x,80,40))
+                elif block_queue[x] == 3:
+                    pygame.draw.rect(screen,"orange",(500,-40+offset+ite*x,80,40))
+                    pygame.draw.rect(screen,"orange",(460,offset+ite*x,80,40))
+                elif block_queue[x] == 4:
+                    pygame.draw.rect(screen,"cyan",(460,offset+ite*x,80,40))
+                    pygame.draw.rect(screen,"cyan",(500,40+offset+ite*x,40,80))
+                elif block_queue[x] == 5:
+                    pygame.draw.rect(screen,"purple",(460,offset+ite*x,80,40))
+                    pygame.draw.rect(screen,"purple",(460,40+offset+ite*x,40,80))
+                elif block_queue[x] == 6:
+                    pygame.draw.rect(screen,"violet",(460,offset+ite*x,40,40))
+                    pygame.draw.rect(screen,"violet",(420,40+offset+ite*x,120,40))
+                elif block_queue[x] == 7:
+                    pygame.draw.rect(screen,"pink",(460,offset+ite*x,40,160))
+
+
+
+        for j in range(20):
+            filled = 0
+            for i in range(10):
                 if play_field[i][j] == 1:
                      pygame.draw.rect(screen,'green',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))   
                 elif play_field[i][j] ==2:
@@ -265,7 +283,7 @@ while running:
                     pygame.draw.rect(screen,'pink',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
                 elif play_field[i][j] >10:
                     pygame.draw.rect(screen,'blue',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
-                 
+                    filled+=1
 
                 else:
                     if j %2 != 0:
@@ -278,6 +296,19 @@ while running:
                             pygame.draw.rect(screen,'black',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
                         else:
                             pygame.draw.rect(screen,'grey',(frame_w+(rect_size*i),1000-(rect_size*20)-frame_w+(rect_size*j),rect_size,rect_size))
+                if filled == 10:
+                    for x, y in coords:
+                         play_field[x][y] = 0  
+
+                    for k in range(j, 0, -1):
+                         for i in range(10):
+                            play_field[i][k] = play_field[i][k - 1]
+
+                    for i in range(10):
+                        play_field[i][0] = 0
+
+                    for x, y in coords:
+                        play_field[x][y] = current_object  
 
         
 

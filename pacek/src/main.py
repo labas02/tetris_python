@@ -1,4 +1,4 @@
-import pygame # type: ignore
+import pygame
 import itertools
 from collections import defaultdict
 import threading
@@ -94,11 +94,69 @@ def move_block(which_side, value):
         
         coords = new_coords
         for x, y in coords:
-            play_field[x][y] = original_number  
+            play_field[x][y] = original_number
 
 
 def rotate_block():
-    return
+    global coords, play_field
+    if coords:
+        # Get the pivot point (usually the first coordinate in the block)
+        pivot = coords[0]
+        new_coords = []
+
+        # Rotate each coordinate 90 degrees around the pivot point
+        for x, y in coords:
+            # 90-degree rotation formula:
+            new_x = pivot[0] + (y - pivot[1])
+            new_y = pivot[1] - (x - pivot[0])
+            new_coords.append([new_x, new_y])
+
+        # Debug: print the old and new coordinates for rotation
+        print("Old coords:", coords)
+        print("New coords:", new_coords)
+
+        # Check if the new coordinates are valid (within bounds and not colliding with existing blocks)
+        valid_move = True
+
+        for x, y in new_coords:
+            # Check bounds
+            if not (0 <= x < 10 and 0 <= y < 20):
+                valid_move = False
+                print(f"Out of bounds: {x}, {y}")
+                break
+
+            # Check for collision with frozen blocks (i.e., blocks with values >= 10)
+            if play_field[x][y] >= 10:
+                valid_move = False
+                print(f"Collision at: {x}, {y}")
+                break
+
+        if valid_move:
+            # Block is valid for rotation: clear the old block from the playfield
+            for x, y in coords:
+                play_field[x][y] = 0  # Clear old block
+
+            # Update the coordinates to the new rotated ones
+            coords = new_coords
+
+            # Get the block type (assuming it's stored at the first coordinate of the original block)
+            block_type = play_field[coords[0][0]][coords[0][1]] if play_field[coords[0][0]][coords[0][
+                1]] > 0 else 1  # Default to 1 if no type found
+
+            # Debug: print block type to check if it's correct
+            print(f"Block type: {block_type}")
+
+            # Place the rotated block on the playfield with the correct block type
+            for x, y in coords:
+                play_field[x][y] = block_type  # Place block back
+
+            # Debug: print the updated playfield
+            print("Updated playfield:")
+            for row in play_field:
+                print(row)
+        else:
+            print("Rotation failed: Invalid move detected.")
+
 
 def check_floor():
     global coords
@@ -176,6 +234,9 @@ while running:
                     move_block(1,1)
                 elif event.key == pygame.K_a:
                     move_block(1,-1)
+                elif event.key == pygame.K_SPACE:
+                    print("SPACE")
+                    rotate_block()
 
     if  game_stage == 1:
         rmenu()

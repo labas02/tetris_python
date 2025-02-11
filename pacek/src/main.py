@@ -185,11 +185,12 @@ def rmenu():
     pygame.draw.rect(screen,(192,191,188),(265,365,270,70))
     screen.blit(helvetica.render("play",False,(0,0,0)),(265,365))
 
-    pygame.draw.rect(screen,(192,191,188),(265,465,270,70))
-    screen.blit(helvetica.render("highscore",False,(0,0,0)),(265,465))
 
-    pygame.draw.rect(screen,(192,191,188),(265,565,270,70))
-    screen.blit(helvetica.render("options",False,(0,0,0)),(265,565))
+#    pygame.draw.rect(screen,(192,191,188),(265,465,270,70))
+ #   screen.blit(helvetica.render("highscore",False,(0,0,0)),(265,465))
+
+  #  pygame.draw.rect(screen,(192,191,188),(265,565,270,70))
+   # screen.blit(helvetica.render("options",False,(0,0,0)),(265,565))
 
     pygame.draw.rect(screen,(192,191,188),(265,665,270,70))
     screen.blit(helvetica.render("exit",False,(0,0,0)),(265,665))
